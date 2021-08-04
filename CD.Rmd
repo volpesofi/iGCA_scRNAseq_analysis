@@ -1,0 +1,1208 @@
+---
+title: "Bonanomi_TdTomato_clustering_all_cells"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+Write here come text
+
+```{r}
+suppressMessages(library(ggbeeswarm))
+suppressMessages(library(dplyr))
+suppressMessages(library(Seurat))
+suppressMessages(library(Matrix))
+suppressMessages(library(gplots))
+suppressMessages(library(ggplot2))
+suppressMessages(library(openxlsx))
+suppressMessages(library(cowplot))
+suppressMessages(library(patchwork))
+library(scales)
+library(viridis)
+library(SeuratWrappers)
+library(slingshot)
+require(BiocStyle)
+library(SingleCellExperiment)
+#print(version) R version 3.6.1
+#Bonanomi
+
+
+
+
+setwd("/Users/maurizio.aurora/Documents/Ydens_integration")
+
+###########################################
+# Examine the three datasets from Ydens et al.
+# steady state
+# day1 post injury
+# day5 post injury
+###########################################
+
+
+#ststD1D5_rawcounts <-read.table("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/public_data/macrophages/GSE144707_countTable_aggrNerveStStD1D5.txt", header=T)
+
+##########
+# steady state
+##########
+
+
+stst_rawcounts <-read.table(gzfile("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/public_data/macrophages/GSE144707_RAW/GSM4294086_countTable_nerveStSt.txt.gz"), header = T)
+
+rownames(stst_rawcounts) = stst_rawcounts$gene
+stst_rawcounts$gene <- NULL
+
+steady <- CreateSeuratObject(counts = stst_rawcounts, project = "stst", min.cells = 5, min.features = 200)
+
+steady[["percent.mt"]] <- PercentageFeatureSet(steady, pattern = "^mt-")
+steady[["percent.Rpl"]] <- PercentageFeatureSet(steady, pattern = "Rpl")
+
+steady$stim <- "steady"
+
+options(repr.plot.width=8, repr.plot.height=6)
+VlnPlot(steady, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+min_nFeature_RNA = 300 
+max_nFeature_RNA = 2000
+max_percent_MT = 3
+
+steady.subset <- subset(steady, 
+             subset = nFeature_RNA > min_nFeature_RNA & nFeature_RNA < max_nFeature_RNA & percent.mt < max_percent_MT)
+
+
+VlnPlot(steady.subset, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+FeatureScatter(steady.subset, feature1 = "nCount_RNA", feature2 = "percent.mt",cols = NULL)
+FeatureScatter(steady.subset, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+VlnPlot(steady.subset, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+
+##########
+# D1
+##########
+
+D1_rawcounts <-read.table(gzfile("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/public_data/macrophages/GSE144707_RAW/GSM4294087_countTable_nerveD1.txt.gz"), header = T)
+
+rownames(D1_rawcounts) = D1_rawcounts$gene
+D1_rawcounts$gene <- NULL
+
+D1 <- CreateSeuratObject(counts = D1_rawcounts, project = "D1", min.cells = 5, min.features = 200)
+
+
+D1[["percent.mt"]] <- PercentageFeatureSet(D1, pattern = "^mt-")
+D1[["percent.Rpl"]] <- PercentageFeatureSet(D1, pattern = "Rpl")
+
+D1$stim <- "D1"
+
+options(repr.plot.width=8, repr.plot.height=6)
+VlnPlot(D1, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+min_nFeature_RNA = 300 
+max_nFeature_RNA = 2000
+max_percent_MT = 3
+
+D1.subset <- subset(D1, 
+             subset = nFeature_RNA > min_nFeature_RNA & nFeature_RNA < max_nFeature_RNA & percent.mt < max_percent_MT)
+
+
+FeatureScatter(D1.subset, feature1 = "nCount_RNA", feature2 = "percent.mt",cols = NULL)
+FeatureScatter(D1.subset, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+
+VlnPlot(D1.subset, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+##########
+# D5
+##########
+
+D5_rawcounts <-read.table(gzfile("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/public_data/macrophages/GSE144707_RAW/GSM4294088_countTable_nerveD5.txt.gz"), header = T)
+
+rownames(D5_rawcounts) = D5_rawcounts$gene
+D5_rawcounts$gene <- NULL
+
+D5 <- CreateSeuratObject(counts = D5_rawcounts, project = "D5", min.cells = 5, min.features = 200)
+
+D5[["percent.mt"]] <- PercentageFeatureSet(D5, pattern = "^mt-")
+D5[["percent.Rpl"]] <- PercentageFeatureSet(D5, pattern = "Rpl")
+
+D5$stim <- "D5"
+
+options(repr.plot.width=8, repr.plot.height=6)
+VlnPlot(D5, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+min_nFeature_RNA = 300 
+max_nFeature_RNA = 2000
+max_percent_MT = 3
+
+D5.subset <- subset(D5, 
+             subset = nFeature_RNA > min_nFeature_RNA & nFeature_RNA < max_nFeature_RNA & percent.mt < max_percent_MT)
+
+
+FeatureScatter(D5.subset, feature1 = "nCount_RNA", feature2 = "percent.mt",cols = NULL)
+FeatureScatter(D5.subset, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+VlnPlot(D5.subset, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+
+
+
+###################
+# merge the objects
+###################
+
+ststD1D5 <- merge(steady, y = c(D1, D5), add.cell.ids = c("stst", "D1", "D5"), project = "ssD1D5")
+
+table(ststD1D5$orig.ident)
+#D1   D5 stst 
+#2793 2059  728
+
+ststD1D5[["percent.mt"]] <- PercentageFeatureSet(ststD1D5, pattern = "^mt-")
+ststD1D5[["percent.Rpl"]] <- PercentageFeatureSet(ststD1D5, pattern = "Rpl")
+
+#ststD1D5$stim <- "ssD1D5"
+
+options(repr.plot.width=8, repr.plot.height=6)
+VlnPlot(ststD1D5, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+min_nFeature_RNA = 300 
+max_nFeature_RNA = 2000
+max_percent_MT = 2.5
+
+ststD1D5.subset <- subset(ststD1D5, 
+             subset = nFeature_RNA > min_nFeature_RNA & nFeature_RNA < max_nFeature_RNA & percent.mt < max_percent_MT)
+
+
+VlnPlot(ststD1D5.subset, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+FeatureScatter(ststD1D5.subset, feature1 = "nCount_RNA", feature2 = "percent.mt",cols = NULL)
+FeatureScatter(ststD1D5.subset, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+VlnPlot(ststD1D5.subset, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+ststD1D5.subset <- NormalizeData(ststD1D5.subset, verbose = FALSE)
+ststD1D5.subset <- FindVariableFeatures(ststD1D5.subset, selection.method = "vst", nfeatures = 2000)
+#ScaleDate and regress for MTpercent and nFeature_RNA
+ststD1D5.subset <- ScaleData(ststD1D5.subset, 
+                vars.to.regress = c("percent.mt", "nFeature_RNA"))
+
+ststD1D5.subset <- RunPCA(ststD1D5.subset, npcs = 15, verbose = FALSE)
+print(ststD1D5.subset[["pca"]], dims = 1:5, nfeatures = 5)
+VizDimLoadings(ststD1D5.subset, dims = 1:3, reduction = "pca")
+DimPlot(ststD1D5.subset, reduction = "pca")
+DimHeatmap(ststD1D5.subset, dims = 1, cells = 500, balanced = TRUE)
+DimHeatmap(ststD1D5.subset, dims = 1:15, cells = 500, balanced = TRUE)
+ElbowPlot(ststD1D5.subset)
+
+nPC = 15 
+res = 0.5
+
+ststD1D5.subset <- FindNeighbors(ststD1D5.subset, dims = 1:nPC)
+ststD1D5.subset <- FindClusters(ststD1D5.subset, resolution = res)
+
+ststD1D5.subset <- RunUMAP(ststD1D5.subset, dims = 1:nPC)
+ststD1D5.subset <- RunTSNE(ststD1D5.subset, dims = 1:nPC)
+
+DimPlot(ststD1D5.subset, reduction = "umap")
+
+
+This is the result from
+
+library(scales)
+show_col(hue_pal()(3))
+
+DimPlot(ststD1D5.subset, reduction = "tsne", group.by = "orig.ident", cols = c('stst' = '#619CFF', 'D1' = '#00BA38',  'D5' = '#F8766D')) + ggtitle('Steady state + Day 1 + Day 5')
+
+DimPlot(ststD1D5.subset, reduction = "tsne", group.by = "orig.ident", cols = c('stst' = '#619CFF', 'D1' = 'lightgrey',  'D5' = 'lightgrey')) + ggtitle('Steady state')
+
+DimPlot(ststD1D5.subset, reduction = "tsne", group.by = "orig.ident", cols = c('stst' = 'lightgrey', 'D1' = '#00BA38',  'D5' = 'lightgrey')) + ggtitle('Day 1')
+
+DimPlot(ststD1D5.subset, reduction = "tsne", group.by = "orig.ident", cols = c('stst' = 'lightgrey', 'D1' = 'lightgrey',  'D5' = '#F8766D')) + ggtitle('Day 5')
+
+
+
+FeaturePlot(ststD1D5.subset, c("Mgl2", "Retnla", "Arg1", "Vegfa", "Ccl12", "Clec10a","S100a4","H2-Aa"), order = TRUE , reduction = "tsne", ncol = 4, label = FALSE ) & NoLegend()
+
+
+DimPlot(ststD1D5.subset, reduction = "tsne")
+
+
+thresh.use = 0.25
+min.pct = 0.25
+min.diff.pct = -Inf
+test.use ="wilcox"
+
+cluster.markers = FindAllMarkers(ststD1D5.subset, thresh.use = thresh.use, test.use=test.use, min.pct=min.pct, min.diff.pct=min.diff.pct, only.pos=TRUE)
+
+
+#filename_xls <- 'markers_ydens.xlsx'
+#write.xlsx(Uninj.subset,
+#           file= filename_xls, 
+#           row.names = T,
+#           asTable = T)
+
+top10 <- cluster.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_logFC)
+DoHeatmap(ststD1D5.subset, features = top10$gene,angle = 45, size = 2) + NoLegend()
+
+Epineurial_macrophages= c("Ccl8", "Ccl24", "Cd209", "Clec10a", "Fcna", "Folr2", "Fxyd2", "Retnla", "Tslp")
+
+Endoneurial_macrophages=c("Ccr2","Il1rl1","Cxcl1","Selm","Pla2g2d","Qpct","Tnfsf9","Xist","H2-Aa","H2-Ab1","Cd74")
+
+
+Plot_sign <- function(Seraut.object, signature, operator = sum, titlename) {
+  x <- Seraut.object
+  DefaultAssay(x) <- "RNA"
+  
+  x[["Sign_exp"]] <- apply(FetchData(object = x, 
+                                     vars = signature),
+                           1,
+                           operator)
+  FP <- FeaturePlot(x, reduction = "umap", 
+                    features = 'Sign_exp', 
+                    label = T, 
+                    pt.size = 2,
+                    order = T,
+                    cols = c("lightgrey", "blue")) +
+    theme(plot.title = element_text(color="blue", size=10, face="bold.italic"),
+          plot.subtitle = element_text(color="dodgerblue2", size=8, face="italic"),
+          axis.text.x = element_text(angle = 90, face = "bold", color = 'dodgerblue4', size=10, hjust =1), 
+          axis.title.x = element_text(face = "bold", color = "dodgerblue2", size = 10),
+          axis.text.y = element_text(angle = 0, face = "bold", color = 'dodgerblue4', size=10),
+          axis.title.y = element_text(face = "bold", color = "dodgerblue2", size = 10),
+          legend.text = element_text(face = "bold", color = "dodgerblue2", size = 10),
+          panel.background = element_rect(fill = "white",colour = "black", size = 1, linetype = "solid")) +
+    #labs(title= titlename, subtitle = paste('',toString(signature), sep=''), 
+    labs(title=titlename)
+  #, 
+  #     x = "tSNE 1", y = "tSNE 2") 
+  return(FP)
+}
+
+#FeaturePlot(ststD1D5.subset, Epineurial_macrophages, order = T)
+
+
+
+Plot_sign(ststD1D5.subset,
+                     signature= Epineurial_macrophages, 
+                     operator = median, titlename = "Epineurial macrophages")
+
+
+Plot_sign(ststD1D5.subset,
+                     signature= Endoneurial_macrophages, 
+                     operator = median, titlename = "Endoneurial macrophages")
+
+
+DimPlot(ststD1D5.subset, split.by= "orig.ident", ncol = 2, reduction = "tsne")
+
+
+saveRDS(ststD1D5.subset, "Ydens_stst_D1_D5_merged.Rds")
+
+
+############
+# pre injury : intact
+# integrate together stst from Ydens with sample 1 from Dario
+############
+
+object_clean_new = readRDS("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/Subclustering_mm10_M16_TdTomato_cc_2/seurat_objects/all_cell_types_scBonanomi_full.Rds")
+
+
+DefaultAssay(object_clean_new) <-'RNA'
+
+# prepare my objects for the integration as in :
+# https://satijalab.org/seurat/archive/v3.1/immune_alignment.html
+
+# extract my sample from integrated
+sample1 <- subset(x = object_clean_new, subset = stim == "1")
+
+
+# normalize and find varible features in the objects
+object_clean_new.list <- lapply(X = c(sample1, steady.subset), FUN = function(x) {
+    x <- NormalizeData(x)
+    x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
+})
+
+# find integration anchors
+integrated <- FindIntegrationAnchors(object.list = object_clean_new.list, dims = 1:20)
+
+features.to.integrate = integrated@anchor.features
+
+integrated <- IntegrateData(anchorset = integrated, dims = 1:20, features.to.integrate = features.to.integrate)
+
+DefaultAssay(integrated) <- "integrated"
+
+table(integrated$orig.ident)
+
+
+#   1 stst 
+#1525  693 
+
+res = 1
+
+
+# Run the standard workflow for visualization and clustering
+integrated <- ScaleData(integrated, verbose = FALSE)
+integrated <- RunPCA(integrated, npcs = 30, verbose = FALSE)
+# t-SNE and Clustering
+integrated <- RunUMAP(integrated, reduction = "pca", dims = 1:20)
+integrated <- RunTSNE(integrated, reduction = "pca", dims = 1:20)
+integrated <- FindNeighbors(integrated, reduction = "pca", dims = 1:20)
+integrated <- FindClusters(integrated, resolution = res)
+DimPlot(integrated, reduction = "umap")
+#DimPlot(integrated_bon1, reduction = "tsne")
+
+DimPlot(integrated, reduction = "umap", split.by = "stim")
+DimPlot(integrated, reduction = "umap", group.by = "stim")
+
+
+
+
+
+PERICYTES <-WhichCells(object=object_clean_new, idents="PERI")
+ARTERIAL <-WhichCells(object=object_clean_new, idents="ARTERIAL")
+TIP_1 <-WhichCells(object=object_clean_new, idents="TIP_1")
+TIP_2 <-WhichCells(object=object_clean_new, idents="TIP_2")
+BARR_END_CAP <-WhichCells(object=object_clean_new, idents="BARR_END_CAP")
+VENOUS_PLVAP_M <-WhichCells(object=object_clean_new, idents="VENOUS_PLVAP-")
+VENOUS_PLVAP_P <-WhichCells(object=object_clean_new, idents="VENOUS_PLVAP+")
+FIBRO <-WhichCells(object=object_clean_new, idents="FIBRO")
+NK <-WhichCells(object=object_clean_new, idents="NK")
+
+
+CAPILLARY_PLVAP_M <-WhichCells(object=object_clean_new, idents="CAPILLARY_PLVAP-")
+CAPILLARY_PLVAP_P <-WhichCells(object=object_clean_new, idents="CAPILLARY_PLVAP+")
+LEC <-WhichCells(object=object_clean_new, idents="LEC")
+
+DimPlot(integrated, label=T, cells.highlight=NK, cols.highlight = c("cyan"), cols= "grey")
+
+
+
+Plot_sign(integrated,
+                     signature= Epineurial_macrophages, 
+                     operator = median, titlename = "Epineurial macrophages")
+
+
+Plot_sign(integrated,
+                     signature= Endoneurial_macrophages, 
+                     operator = median, titlename = "Endoneurial macrophages")
+
+
+DimPlot(integrated)
+
+
+new.cluster.ids <- c('ENDO_MACS', 
+                          'BARR_END_CAP',
+                          'TIP',
+                          'FIBRO',
+                          'VENOUS_PLVAP+',
+                          'EPI_MACS',
+                          'CAPILLARY',
+                          'FIBRO',
+                          'LEC',
+                          'NK',
+                          'PERI',
+                          'ARTERIAL'
+                          )
+
+names(new.cluster.ids) <- levels(integrated)
+integrated_rn <- RenameIdents(integrated, new.cluster.ids)
+
+DimPlot(integrated_rn, split.by="stim")
+DimPlot(integrated_rn)
+
+
+cluster.markers = FindAllMarkers(integrated_rn, thresh.use = thresh.use, test.use=test.use, min.pct=min.pct, min.diff.pct=min.diff.pct, only.pos=TRUE)
+
+
+filename_xls <- 'markers_ydens_stst_1_integrated.xlsx'
+write.xlsx(cluster.markers,
+           file= filename_xls, 
+           row.names = T,
+           asTable = T)
+
+#assign proper cell names to the clusters
+
+top10 <- cluster.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_logFC)
+DoHeatmap(integrated_rn, features = top10$gene,angle = 45, size = 2) + NoLegend()
+
+
+DefaultAssay(integrated) = "RNA"
+
+
+FeaturePlot(integrated, c("Mest","Chga"), order = T) 
+
+
+saveRDS(integrated_rn, "Ydens_stst_Bon_sample1_integration_assigned.Rds")
+saveRDS(integrated, "Ydens_stst_Bon_sample1_integration_notassigned.Rds")
+
+
+integrated_rn = readRDS("Ydens_stst_Bon_sample1_integration_assigned.Rds")
+
+DimPlot(integrated_rn, cols = c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP' = '#CD9600', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY' = 'grey', 'NK' = 'black', 'ENDO_MACS' = "yellow", 'EPI_MACS' = "cyan"))
+
+
+DimPlot(integrated_rn, split.by = "stim", cols = c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP' = '#CD9600', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY' = 'grey', 'NK' = 'black', 'ENDO_MACS' = "yellow", 'EPI_MACS' = "cyan"))
+
+pt <- table(Idents(integrated_rn), integrated_rn$stim)
+pt <- as.data.frame(pt)
+pt$Cluster <- as.character(pt$Var1)
+
+ 
+
+#pdf("Barplot_integrated.subset_LUD7476.pdf")
+ggplot(pt, aes(x = Var2, y = Freq, fill = Var1)) +
+  theme_bw(base_size = 15) +
+  geom_col(position = "fill", width = 0.5) +
+  xlab("Sample") +
+  ylab("Proportion") +
+  scale_fill_manual(values=c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP' = '#CD9600', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY' = 'grey', 'NK' = 'black', 'ENDO_MACS' = "yellow", 'EPI_MACS' = "cyan"))
+#dev.off()
+ 
+
+
+############
+# post injury
+# integrate together D1 from Ydens with sample 2 from Dario
+############
+
+object_clean_new = readRDS("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/Subclustering_mm10_M16_TdTomato_cc_2/seurat_objects/all_cell_types_scBonanomi_full.Rds")
+
+
+DefaultAssay(object_clean_new) <-'RNA'
+
+# prepare my objects for the integration as in :
+# https://satijalab.org/seurat/archive/v3.1/immune_alignment.html
+
+# extract my sample from integrated
+sample2 <- subset(x = object_clean_new, subset = stim == "2")
+
+
+# normalize and find varible features in the objects
+object_clean_new.list <- lapply(X = c(sample2, D1.subset), FUN = function(x) {
+    x <- NormalizeData(x)
+    x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
+})
+
+# find integration anchors
+integrated <- FindIntegrationAnchors(object.list = object_clean_new.list, dims = 1:20)
+
+features.to.integrate = integrated@anchor.features
+
+integrated <- IntegrateData(anchorset = integrated, dims = 1:20, features.to.integrate = features.to.integrate)
+
+DefaultAssay(integrated) <- "integrated"
+
+table(integrated$orig.ident)
+
+
+#   2   D1 
+#1884 2774 
+
+res = 3
+
+
+# Run the standard workflow for visualization and clustering
+integrated <- ScaleData(integrated, verbose = FALSE)
+integrated <- RunPCA(integrated, npcs = 30, verbose = FALSE)
+# t-SNE and Clustering
+integrated <- RunUMAP(integrated, reduction = "pca", dims = 1:20)
+integrated <- RunTSNE(integrated, reduction = "pca", dims = 1:20)
+integrated <- FindNeighbors(integrated, reduction = "pca", dims = 1:20)
+integrated <- FindClusters(integrated, resolution = res)
+DimPlot(integrated, reduction = "umap")
+#DimPlot(integrated_bon1, reduction = "tsne")
+
+DimPlot(integrated, reduction = "umap", split.by = "stim")
+DimPlot(integrated, reduction = "umap", group.by = "stim")
+
+
+
+PERICYTES <-WhichCells(object=object_clean_new, idents="PERI")
+ARTERIAL <-WhichCells(object=object_clean_new, idents="ARTERIAL")
+TIP_1 <-WhichCells(object=object_clean_new, idents="TIP_1")
+TIP_2 <-WhichCells(object=object_clean_new, idents="TIP_2")
+BARR_END_CAP <-WhichCells(object=object_clean_new, idents="BARR_END_CAP")
+VENOUS_PLVAP_M <-WhichCells(object=object_clean_new, idents="VENOUS_PLVAP-")
+VENOUS_PLVAP_P <-WhichCells(object=object_clean_new, idents="VENOUS_PLVAP+")
+FIBRO <-WhichCells(object=object_clean_new, idents="FIBRO")
+NK <-WhichCells(object=object_clean_new, idents="NK")
+CAPILLARY_PLVAP_M <-WhichCells(object=object_clean_new, idents="CAPILLARY_PLVAP-")
+CAPILLARY_PLVAP_P <-WhichCells(object=object_clean_new, idents="CAPILLARY_PLVAP+")
+LEC <-WhichCells(object=object_clean_new, idents="LEC")
+
+DimPlot(integrated, label=T, cells.highlight=VENOUS_PLVAP_P, cols.highlight = c("cyan"), cols= "grey")
+
+
+DefaultAssay(integrated) = "RNA"
+
+#monocyte-derived macrophages markers
+FeaturePlot(integrated, c("Arg1","Chil3"), order = T, split.by = "stim") 
+
+
+
+new.cluster.ids <- c('MACS', 
+                          'MACS',
+                          'MACS',
+                          'MACS',
+                          'NK',
+                          'TIP_1',
+                          'CAPILLARY',
+                          'FIBRO',
+                          'ARTERIAL',
+                          'VENOUS_PLVAP-',
+                          'BARR_END_CAP',
+                          'MACS',
+                          'MACS',
+                          'MACS',
+                          'MACS',
+                          'VENOUS_PLVAP+',
+                          'VENOUS_PLVAP+',
+                          'MACS',
+                          'MACS',
+                          'TIP_2',
+                          'MACS',
+                          'MACS', 
+                          'PERI',
+                          'TIP_2',
+                          'FIBRO'
+                          )
+
+
+names(new.cluster.ids) <- levels(integrated)
+integrated_rn <- RenameIdents(integrated, new.cluster.ids)
+
+
+
+DimPlot(integrated_rn, cols = c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP_1' = '#CD9600','TIP_2' = 'pink', 'CAPILLARY_PLVAP-' = '#00BE67', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY_PLVAP+' = 'grey', 'NK' = 'black', 'MACS' = "red"))
+
+DimPlot(integrated_rn, split.by = "stim", cols = c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP_1' = '#CD9600','TIP_2' = 'pink', 'CAPILLARY_PLVAP-' = '#00BE67', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY_PLVAP+' = 'grey', 'NK' = 'black', 'MACS' = "red"))
+
+DimPlot(integrated_rn, group.by = "stim")
+
+
+DefaultAssay(integrated_rn) = "integrated"
+
+cluster.markers = FindAllMarkers(integrated_rn, thresh.use = thresh.use, test.use=test.use, min.pct=min.pct, min.diff.pct=min.diff.pct, only.pos=TRUE)
+
+
+filename_xls <- 'markers_ydens_D1_2_integrated.xlsx'
+write.xlsx(cluster.markers,
+           file= filename_xls, 
+           row.names = T,
+           asTable = T)
+
+#assign proper cell names to the clusters
+
+top5 <- cluster.markers %>% group_by(cluster) %>% top_n(n = 5, wt = avg_logFC)
+DoHeatmap(integrated_rn, 
+          features = top5$gene, 
+          angle = 45, size = 2,
+          group.colors = c('VENOUS_PLVAP+' = '#F8766D', 
+                           'VENOUS_PLVAP-' = 'brown', 
+                           'BARR_END_CAP' = '#7CAE00', 
+                           'TIP_1' = '#CD9600',
+                           'TIP_2' = 'pink', 
+                           'ARTERIAL' = '#00BFC4', 
+                           'PERI' = '#00A9FF', 
+                           'FIBRO'='#C77CFF', 
+                           'LEC'='#FF61CC', 
+                           'CAPILLARY' = 'grey', 
+                           'NK' = 'black', 
+                           'MACS' = "red")) + NoLegend()
+
+
+DefaultAssay(integrated_rn) = "RNA"
+
+
+saveRDS(integrated_rn, "Ydens_D1_Bon_sample2_integration_assigned.Rds")
+saveRDS(integrated, "Ydens_D1_Bon_sample2_integration_notassigned.Rds")
+
+
+#integrated = readRDS("Ydens_D1_Bon_sample2_integration_notassigned.Rds")
+
+
+pt <- table(Idents(integrated_rn), integrated_rn$stim)
+pt <- as.data.frame(pt)
+pt$Cluster <- as.character(pt$Var1)
+
+ 
+
+#pdf("Barplot_integrated.subset_LUD7476.pdf")
+ggplot(pt, aes(x = Var2, y = Freq, fill = Var1)) +
+  theme_bw(base_size = 15) +
+  geom_col(position = "fill", width = 0.5) +
+  xlab("Sample") +
+  ylab("Proportion") +
+  scale_fill_manual(values=c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP_1' = '#CD9600','TIP_2' = 'pink', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY' = 'grey', 'NK' = 'black', 'MACS' = "red"))
+#dev.off()
+ 
+
+
+
+
+
+
+############
+############
+# post injury
+# integrate together D5 from Ydens with sample 2 from Dario
+############
+############
+
+object_clean_new = readRDS("/Users/maurizio.aurora/Dropbox (HSR Global)/WORKSPACE/Bonanomi/Bonanomi_1287_scRNA_injury/7_bioinfo/Subclustering_mm10_M16_TdTomato_cc_2/seurat_objects/all_cell_types_scBonanomi_full.Rds")
+
+
+DefaultAssay(object_clean_new) <-'RNA'
+
+# prepare my objects for the integration as in :
+# https://satijalab.org/seurat/archive/v3.1/immune_alignment.html
+
+# extract my sample from integrated
+sample2 <- subset(x = object_clean_new, subset = stim == "2")
+
+
+# normalize and find varible features in the objects
+object_clean_new.list <- lapply(X = c(sample2, D5.subset), FUN = function(x) {
+    x <- NormalizeData(x)
+    x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
+})
+
+# find integration anchors
+integrated <- FindIntegrationAnchors(object.list = object_clean_new.list, dims = 1:20)
+
+features.to.integrate = integrated@anchor.features
+
+integrated <- IntegrateData(anchorset = integrated, dims = 1:20, features.to.integrate = features.to.integrate)
+
+DefaultAssay(integrated) <- "integrated"
+
+table(integrated$orig.ident)
+
+#Macs
+
+#   2   D5 
+#1884 2028 
+
+res = 1.5
+
+DefaultAssay(integrated) = "integrated"
+# Run the standard workflow for visualization and clustering
+integrated <- ScaleData(integrated, verbose = FALSE)
+integrated <- RunPCA(integrated, npcs = 30, verbose = FALSE)
+# t-SNE and Clustering
+integrated <- RunUMAP(integrated, reduction = "pca", dims = 1:20)
+integrated <- RunTSNE(integrated, reduction = "pca", dims = 1:20)
+integrated <- FindNeighbors(integrated, reduction = "pca", dims = 1:20)
+integrated <- FindClusters(integrated, resolution = res)
+DimPlot(integrated, reduction = "umap")
+#DimPlot(integrated_bon1, reduction = "tsne")
+
+DimPlot(integrated, reduction = "umap", split.by = "stim")
+DimPlot(integrated, reduction = "umap", group.by = "stim")
+
+
+PERICYTES <-WhichCells(object=object_clean_new, idents="PERI")
+ARTERIAL <-WhichCells(object=object_clean_new, idents="ARTERIAL")
+TIP_1 <-WhichCells(object=object_clean_new, idents="TIP_1")
+TIP_2 <-WhichCells(object=object_clean_new, idents="TIP_2")
+BARR_END_CAP <-WhichCells(object=object_clean_new, idents="BARR_END_CAP")
+VENOUS_PLVAP_M <-WhichCells(object=object_clean_new, idents="VENOUS_PLVAP-")
+VENOUS_PLVAP_P <-WhichCells(object=object_clean_new, idents="VENOUS_PLVAP+")
+FIBRO <-WhichCells(object=object_clean_new, idents="FIBRO")
+NK <-WhichCells(object=object_clean_new, idents="NK")
+CAPILLARY_PLVAP_M <-WhichCells(object=object_clean_new, idents="CAPILLARY_PLVAP-")
+CAPILLARY_PLVAP_P <-WhichCells(object=object_clean_new, idents="CAPILLARY_PLVAP+")
+LEC <-WhichCells(object=object_clean_new, idents="LEC")
+
+DimPlot(integrated, split.by = "stim", label=T, cells.highlight=LEC, cols.highlight = c("cyan"), cols="grey")
+
+DimPlot(integrated, split.by = "stim")
+
+DefaultAssay(integrated) = "RNA"
+
+#monocyte-derived macrophages markers
+
+DefaultAssay(integrated) = "RNA"
+FeaturePlot(integrated, c("H2-Aa"), order = T, split.by = "stim") 
+
+new.cluster.ids <- c('TIP_1', 
+                          'MACS',
+                          'MACS',
+                          'LEC',
+                          'VENOUS_PLVAP+',
+                          'VENOUS_PLVAP-',
+                          'MACS',
+                          'FIBRO',
+                          'BARR_END_CAP',
+                          'TIP_2',
+                          'ARTERIAL',
+                          'TIP_2',
+                          'MACS',
+                          'PERI',
+                          'FIBRO',
+                          'MACS',
+                          'MACS')
+
+
+names(new.cluster.ids) <- levels(integrated)
+integrated_rn <- RenameIdents(integrated, new.cluster.ids)
+
+
+
+DimPlot(integrated_rn, cols = c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP_1' = '#CD9600','TIP_2' = 'pink', 'CAPILLARY_PLVAP-' = '#00BE67', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY_PLVAP+' = 'grey', 'NK' = 'black', 'MACS' = "red"))
+
+DimPlot(integrated_rn, split.by = "stim", cols = c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP_1' = '#CD9600','TIP_2' = 'pink', 'CAPILLARY_PLVAP-' = '#00BE67', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY_PLVAP+' = 'grey', 'NK' = 'black', 'MACS' = "red"))
+
+DimPlot(integrated, group.by = "stim")
+DimPlot(integrated_rn, split.by = "stim")
+
+DefaultAssay(integrated_rn) = "integrated"
+
+cluster.markers = FindAllMarkers(integrated_rn, thresh.use = thresh.use, test.use=test.use, min.pct=min.pct, min.diff.pct=min.diff.pct, only.pos=TRUE)
+
+
+filename_xls <- 'markers_ydens_D5_2_integrated.xlsx'
+write.xlsx(cluster.markers,
+           file= filename_xls, 
+           row.names = T,
+           asTable = T)
+
+#assign proper cell names to the clusters
+
+top10 <- cluster.markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+
+pdf("Heatmap_Ydens_D5_Bon_sample2_integration.pdf")
+DoHeatmap(integrated_rn, 
+          features = top10$gene, 
+          angle = 40, size = 1.5,
+          group.colors = c('VENOUS_PLVAP+' = '#F8766D', 
+                           'VENOUS_PLVAP-' = 'brown', 
+                           'BARR_END_CAP' = '#7CAE00', 
+                           'TIP_1' = '#CD9600',
+                           'TIP_2' = 'pink', 
+                           'ARTERIAL' = '#00BFC4', 
+                           'PERI' = '#00A9FF', 
+                           'FIBRO'='#C77CFF', 
+                           'LEC'='#FF61CC', 
+                           'CAPILLARY' = 'grey', 
+                           'NK' = 'black', 
+                           'MACS' = "red")) + NoLegend() + theme(text = element_text(size = 8))
+dev.off()
+
+DefaultAssay(integrated_rn) = "RNA"
+DefaultAssay(integrated) = "RNA"
+
+saveRDS(integrated_rn, "Ydens_D5_Bon_sample2_integration_assigned.Rds")
+saveRDS(integrated, "Ydens_D5_Bon_sample2_integration_notassigned.Rds")
+
+
+
+
+pt <- table(Idents(integrated_rn), integrated_rn$stim)
+pt <- as.data.frame(pt)
+pt$Cluster <- as.character(pt$Var1)
+
+ 
+
+#pdf("Barplot_integrated.subset_LUD7476.pdf")
+ggplot(pt, aes(x = Var2, y = Freq, fill = Var1)) +
+  theme_bw(base_size = 15) +
+  geom_col(position = "fill", width = 0.5) +
+  xlab("Sample") +
+  ylab("Proportion") +
+  scale_fill_manual(values=c('VENOUS_PLVAP+' = '#F8766D', 'VENOUS_PLVAP-' = 'brown', 'BARR_END_CAP' = '#7CAE00', 'TIP_1' = '#CD9600','TIP_2' = 'pink', 'ARTERIAL' = '#00BFC4', 'PERI' = '#00A9FF', 'FIBRO'='#C77CFF', 'LEC'='#FF61CC', 'CAPILLARY' = 'grey', 'NK' = 'black', 'MACS' = "red"))
+#dev.off()
+ 
+DefaultAssay(integrated) = "RNA"
+FeaturePlot(integrated_rn, "Lyve1", split.by = "stim", order = T)
+
+
+
+######################
+# cellphone DB
+######################
+
+
+############
+############
+# post injury
+# integrate together D5 from Ydens with sample 2 from Dario
+############
+############
+
+
+integrated_rn = readRDS("Ydens_D5_Bon_sample2_integration_assigned.Rds")
+
+
+DefaultAssay(integrated_rn) = "RNA"
+
+#https://www.cellphonedb.org/faq-and-troubleshooting
+
+#DimPlot()
+# take raw data and normalise it. In seurat 3 raw.data are called counts
+count_raw =as.matrix(GetAssayData(object = integrated_rn, slot = "counts"))
+
+# gene names are stored as rownames
+#rownames(count_raw)
+
+# convert mouse gene names in human gene names
+
+require("biomaRt")
+
+convertMouseGeneList <- function(x){
+  #require("biomaRt")
+  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  genesV2 = getLDS(attributes = c("mgi_symbol"), filters = "mgi_symbol", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+  return(genesV2)
+}
+
+converted=convertMouseGeneList(rownames(count_raw))
+#converted=unique(converted)
+
+# if same MGI.symbol is associated to multiple human genes keep only the first one
+occurrence <- converted[!duplicated(converted$MGI.symbol),]
+
+#occurrence[grep("Alg1", occurrence$MGI.symbol), ]
+
+# remove pseudogenes
+#occurrence=occurrence[!grepl("^Gm", occurrence$MGI.symbol),]
+
+# count occurrence of a test gene
+#occurrence[grep("Ercc5", occurrence$HGNC.symbol), ]
+
+rownames(occurrence) = occurrence$MGI.symbol
+
+merged=merge(occurrence,count_raw,by="row.names")   
+
+merged <- merged[-c(1,2)]
+
+
+#sum counts of duplicated rows
+agg=aggregate(merged[,sapply(merged,is.numeric)],merged["HGNC.symbol"],sum)
+
+rownames(agg) = agg$HGNC.symbol
+
+agg$HGNC.symbol <- NULL
+
+#normalize 
+count_norm <- apply(agg, 2, function(x) (x/sum(x))*10000)
+Gene <- rownames(count_norm)
+count_norm <- cbind(Gene,count_norm)
+
+#head(count_norm[1:3,1:3])
+
+#write counts file
+write.table(count_norm, 'cellphonedb_count_S2_D5_Ydens.txt', sep='\t', quote=F, row.names = F)
+
+# generating meta file
+meta_data <- cbind(rownames(integrated_rn@meta.data),as.data.frame(Idents(integrated_rn)))
+colnames(meta_data)<- c("Cell","cell_type")
+keeps <- colnames(count_norm)
+mySubset <- meta_data[meta_data$Cell %in% keeps, ]
+
+#####  cluster is the user’s specific cluster column
+write.table(mySubset, 'cellphonedb_meta_S2_D5_Ydens.txt', sep='\t', quote=F, row.names=F)
+
+
+
+# cellphonedb command
+# python -m venv cpdb-venv
+# source cpdb-venv/bin/activate
+# pip install cellphonedb
+# running the statistical method
+# as reported here https://github.com/Teichlab/cellphonedb/issues/266
+# pip install --force-reinstall numpy==1.19.5
+# mkdir CpDB_S2_D5_Ydens
+# cellphonedb method statistical_analysis cellphonedb_meta_S2_D5_Ydens.txt cellphonedb_count_S2_D5_Ydens.txt --counts-data=gene_name --threads=2 --iterations=100 
+# pip install cellphonedb
+# next time try this
+
+
+# cellphonedb plot dot_plot 
+# cellphonedb plot heatmap_plot cellphonedb_meta_S2_D5_Ydens.txt
+
+
+toplot_matrix = read.table("/Users/maurizio.aurora/Documents/Ydens_integration/out/count_network.txt", header=T)
+toplot_matrix1 <- toplot_matrix[order(toplot_matrix$SOURCE, toplot_matrix$TARGET),]
+
+library(pheatmap)
+library(reshape2)
+matrix_to_plot= acast(toplot_matrix1, SOURCE~TARGET, value.var="count")
+
+# create heatmap using pheatmap
+pheatmap(matrix_to_plot, 
+         cluster_rows = F,
+         cluster_cols = F,
+         show_rownames = T,
+         filename = 'Heatmap_S2_D5_Ydenss.pdf',
+         main = 'S2_vs_D5',
+         legend = TRUE)
+
+
+
+
+############
+############
+# post injury
+# integrate together D1 from Ydens with sample 2 from Dario
+############
+############
+
+
+integrated_rn = readRDS("Ydens_D1_Bon_sample2_integration_assigned.Rds")
+
+DefaultAssay(integrated_rn) = "RNA"
+
+#https://www.cellphonedb.org/faq-and-troubleshooting
+
+#DimPlot()
+# take raw data and normalise it. In seurat 3 raw.data are called counts
+count_raw =as.matrix(GetAssayData(object = integrated_rn, slot = "counts"))
+
+# gene names are stored as rownames
+#rownames(count_raw)
+
+# convert mouse gene names in human gene names
+
+require("biomaRt")
+
+convertMouseGeneList <- function(x){
+  #require("biomaRt")
+  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  genesV2 = getLDS(attributes = c("mgi_symbol"), filters = "mgi_symbol", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+  return(genesV2)
+}
+
+converted=convertMouseGeneList(rownames(count_raw))
+#converted=unique(converted)
+
+# if same MGI.symbol is associated to multiple human genes keep only the first one
+occurrence <- converted[!duplicated(converted$MGI.symbol),]
+
+#occurrence[grep("Alg1", occurrence$MGI.symbol), ]
+
+# remove pseudogenes
+#occurrence=occurrence[!grepl("^Gm", occurrence$MGI.symbol),]
+
+# count occurrence of a test gene
+#occurrence[grep("Ercc5", occurrence$HGNC.symbol), ]
+
+rownames(occurrence) = occurrence$MGI.symbol
+
+merged=merge(occurrence,count_raw,by="row.names")   
+
+merged <- merged[-c(1,2)]
+
+
+#sum counts of duplicated rows
+agg=aggregate(merged[,sapply(merged,is.numeric)],merged["HGNC.symbol"],sum)
+
+rownames(agg) = agg$HGNC.symbol
+
+agg$HGNC.symbol <- NULL
+
+#normalize 
+count_norm <- apply(agg, 2, function(x) (x/sum(x))*10000)
+Gene <- rownames(count_norm)
+count_norm <- cbind(Gene,count_norm)
+
+#head(count_norm[1:3,1:3])
+
+#write counts file
+write.table(count_norm, 'cellphonedb_count_S2_D1_Ydens.txt', sep='\t', quote=F, row.names = F)
+
+# generating meta file
+meta_data <- cbind(rownames(integrated_rn@meta.data),as.data.frame(Idents(integrated_rn)))
+colnames(meta_data)<- c("Cell","cell_type")
+keeps <- colnames(count_norm)
+mySubset <- meta_data[meta_data$Cell %in% keeps, ]
+
+#####  cluster is the user’s specific cluster column
+write.table(mySubset, 'cellphonedb_meta_S2_D1_Ydens.txt', sep='\t', quote=F, row.names=F)
+
+
+
+# cellphonedb command
+# python -m venv cpdb-venv
+# source cpdb-venv/bin/activate
+# pip install cellphonedb
+# running the statistical method
+# as reported here https://github.com/Teichlab/cellphonedb/issues/266
+# pip install --force-reinstall numpy==1.19.5
+# mkdir CpDB_S2_D1_Ydens
+# cellphonedb method statistical_analysis cellphonedb_meta_S2_D1_Ydens.txt cellphonedb_count_S2_D1_Ydens.txt --counts-data=gene_name --threads=2 --iterations=100 
+
+# cellphonedb plot dot_plot 
+# cellphonedb plot heatmap_plot cellphonedb_meta_S2_D1_Ydens.txt
+
+
+########
+
+
+
+
+toplot_matrix = read.table("/Users/maurizio.aurora/Documents/Ydens_integration/out/count_network.txt", header=T)
+toplot_matrix1 <- toplot_matrix[order(toplot_matrix$SOURCE, toplot_matrix$TARGET),]
+
+library(pheatmap)
+library(reshape2)
+matrix_to_plot= acast(toplot_matrix1, SOURCE~TARGET, value.var="count")
+
+# create heatmap using pheatmap
+pheatmap(matrix_to_plot, 
+         cluster_rows = F,
+         cluster_cols = F,
+         show_rownames = T,
+         filename = 'Heatmap_S2_D1_Ydenss.pdf',
+         main = 'S2_vs_D1',
+         legend = TRUE)
+
+#mv enerything in CpDB_S2_D5_Ydens
+
+
+############
+############
+# intact
+# integrate together stst from Ydens with sample 1 from Dario
+############
+############
+pdf("provetta.pdf")
+DimPlot(integrated_rn)
+dev.off()
+
+integrated = readRDS("Ydens_stst_Bon_sample1_integration_notassigned.Rds")
+
+integrated_rn = readRDS("Ydens_stst_Bon_sample1_integration_assigned.Rds")
+
+DimPlot(integrated_rn)
+
+DefaultAssay(integrated_rn) = "RNA"
+
+#https://www.cellphonedb.org/faq-and-troubleshooting
+
+#DimPlot()
+# take raw data and normalise it. In seurat 3 raw.data are called counts
+count_raw =as.matrix(GetAssayData(object = integrated_rn, slot = "counts"))
+
+# gene names are stored as rownames
+#colnames(count_raw)
+
+# convert mouse gene names in human gene names
+
+require("biomaRt")
+
+convertMouseGeneList <- function(x){
+  #require("biomaRt")
+  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  genesV2 = getLDS(attributes = c("mgi_symbol"), filters = "mgi_symbol", values = x , mart = mouse, attributesL = c("hgnc_symbol"), martL = human, uniqueRows=T)
+  return(genesV2)
+}
+
+converted=convertMouseGeneList(rownames(count_raw))
+#converted=unique(converted)
+
+# if same MGI.symbol is associated to multiple human genes keep only the first one
+occurrence <- converted[!duplicated(converted$MGI.symbol),]
+
+#occurrence[grep("Alg1", occurrence$MGI.symbol), ]
+
+# remove pseudogenes
+#occurrence=occurrence[!grepl("^Gm", occurrence$MGI.symbol),]
+
+# count occurrence of a test gene
+#occurrence[grep("Ercc5", occurrence$HGNC.symbol), ]
+
+rownames(occurrence) = occurrence$MGI.symbol
+
+merged=merge(occurrence,count_raw,by="row.names")   
+
+head(merged)
+merged <- merged[-c(1,2)]
+
+
+#sum counts of duplicated rows
+agg=aggregate(merged[,sapply(merged,is.numeric)],merged["HGNC.symbol"],sum)
+
+rownames(agg) = agg$HGNC.symbol
+
+agg$HGNC.symbol <- NULL
+
+#normalize 
+count_norm <- apply(agg, 2, function(x) (x/sum(x))*10000)
+Gene <- rownames(count_norm)
+count_norm <- cbind(Gene,count_norm)
+
+#head(count_norm[1:3,1:3])
+
+#write counts file
+write.table(count_norm, 'cellphonedb_count_S1_stst_Ydens.txt', sep='\t', quote=F, row.names = F)
+
+# generating meta file
+meta_data <- cbind(rownames(integrated_rn@meta.data),as.data.frame(Idents(integrated_rn)))
+colnames(meta_data)<- c("Cell","cell_type")
+keeps <- colnames(count_norm)
+mySubset <- meta_data[meta_data$Cell %in% keeps, ]
+
+#####  cluster is the user’s specific cluster column
+write.table(mySubset, 'cellphonedb_meta_S1_stst_Ydens.txt', sep='\t', quote=F, row.names=F)
+
+
+
+# cellphonedb command
+# python -m venv cpdb-venv
+# source cpdb-venv/bin/activate
+# pip install cellphonedb
+# running the statistical method
+# as reported here https://github.com/Teichlab/cellphonedb/issues/266
+# pip install --force-reinstall numpy==1.19.5
+# mkdir CpDB_S2_D1_Ydens
+# cellphonedb method statistical_analysis cellphonedb_meta_S1_stst_Ydens.txt cellphonedb_count_S1_stst_Ydens.txt --counts-data=gene_name --threads=2 --iterations=100 
+
+# cellphonedb plot dot_plot 
+# cellphonedb plot heatmap_plot cellphonedb_meta_S1_stst_Ydens.txt
+
+
+########
+
+
+
+
+
+toplot_matrix = read.table("/Users/maurizio.aurora/Documents/Ydens_integration/out/count_network.txt", header=T)
+toplot_matrix1 <- toplot_matrix[order(toplot_matrix$SOURCE, toplot_matrix$TARGET),]
+
+library(pheatmap)
+library(reshape2)
+matrix_to_plot= acast(toplot_matrix1, SOURCE~TARGET, value.var="count")
+
+# create heatmap using pheatmap
+pheatmap(matrix_to_plot, 
+         cluster_rows = F,
+         cluster_cols = F,
+         show_rownames = T,
+         filename = 'Heatmap_S1_stst_Ydenss.pdf',
+         main = 'S1_vs_stst',
+         legend = TRUE)
+
+#mv enerything in CpDB_S2_D5_Ydens
+
+
+
+DimPlot(integrated_rn)
+DefaultAssay(integrated_rn) = "RNA"
+FeaturePlot(integrated_rn, "Cdh5", split.by = "stim", cols = 2)
+
+
+
+
+
+
