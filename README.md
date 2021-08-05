@@ -27,7 +27,7 @@ In ``Tcell_carachterisation`` folder you can find the script for Tcell carachter
 ### CellPhoneDB analysis ###
 In the ``Receptor_Ligand_interactions`` folder you can find the script to prepare files for CellPhoneDB analysis ans plot the CellPhoneDB results: ``CellPhoneDB_prepare_plots.R``
 
-## Plotting with ggplot2##
+## Plotting with ggplot2 ##
 In the ``PaperPlot`` folder you can find the script for reproducing the paper figures:  ``plotsNatComm.R``
 
 ## Utility functions ##
