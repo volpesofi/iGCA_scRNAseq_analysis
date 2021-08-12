@@ -21,7 +21,7 @@ In the ``Development`` folder you can find:
   * the script for the integration of neonatal, prepubertal, adults and iGCA samples: ``development.R``
   * the script with the definition of the Stage signatures A, B, C and their expression levels in iGCA and CTL samples: ``development_StagesLEY.R``
 
-### T cell carachterisation ###
+### T cell characterisation ###
 In ``Tcell_carachterisation`` folder you can find the script for Tcell carachterisation according to GSE126030: ``Tcell.R``
 
 ### CellPhoneDB analysis ###
