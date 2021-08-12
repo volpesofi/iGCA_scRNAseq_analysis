@@ -1,5 +1,7 @@
 # iGCA_scRNAseq_analysis
-Analysis script of "Aging, inflammation and DNA damage in the somatic testicular niche with idiopathic germ cell aplasia"
+Analysis script of "Aging, inflammation and DNA damage in the somatic testicular niche with idiopathic germ cell aplasia".
+
+[![DOI](https://zenodo.org/badge/392812220.svg)](https://zenodo.org/badge/latestdoi/392812220)
 
 The single testis samples were analysed following the standard Seurat workflow [https://satijalab.org/seurat/articles/pbmc3k_tutorial.html]
 and integrated with the integration workflow [https://satijalab.org/seurat/articles/integration_introduction.html].
