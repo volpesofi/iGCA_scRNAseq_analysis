@@ -22,7 +22,7 @@ In the ``Development`` folder you can find:
   * the script with the definition of the Stage signatures A, B, C and their expression levels in iGCA and CTL samples: ``development_StagesLEY.R``
 
 ### T cell characterisation ###
-In ``Tcell_carachterisation`` folder you can find the script for Tcell carachterisation according to GSE126030: ``Tcell.R``
+In ``Tcell_characterisation`` folder you can find the script for Tcell characterisation according to GSE126030: ``Tcell.R``
 
 ### CellPhoneDB analysis ###
 In the ``Receptor_Ligand_interactions`` folder you can find the script to prepare files for CellPhoneDB analysis ans plot the CellPhoneDB results: ``CellPhoneDB_prepare_plots.R``
